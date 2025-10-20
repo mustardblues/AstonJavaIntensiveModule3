@@ -1,7 +1,10 @@
 package edu.aston.userservice.app;
 
-import edu.aston.userservice.dao.UserManager;
+import edu.aston.userservice.config.HibernateSessionManager;
+import edu.aston.userservice.dao.UserDAO;
 import edu.aston.userservice.models.User;
+import edu.aston.userservice.service.UserService;
+import org.hibernate.Session;
 
 import java.util.List;
 import java.util.Optional;
@@ -23,14 +26,12 @@ public class ConsoleInterface {
             this::delete
     };
 
-    private final UserManager userManager;
-
-    public ConsoleInterface() {
-        this.userManager = new UserManager();
-    }
+    private UserService userService;
 
     public void start() {
         final Scanner scanner = new Scanner(System.in);
+
+        initHibernateSession();
 
         while(true) {
             System.out.print("-> ");
@@ -47,6 +48,23 @@ public class ConsoleInterface {
                 consoleMethods[index].method();
             }
         }
+
+        closeHibernateSession();
+    }
+
+    private void initHibernateSession() {
+        HibernateSessionManager.init();
+
+        final UserDAO userDAO = new UserDAO();
+        userDAO.initSessionFactory(HibernateSessionManager.getSessionFactory());
+
+        this.userService = new UserService(userDAO);
+    }
+
+    private void closeHibernateSession() {
+        if(HibernateSessionManager.isSessionOpen()) {
+            HibernateSessionManager.close();
+        }
     }
 
     private void create() {
@@ -58,9 +76,7 @@ public class ConsoleInterface {
         final String email = this.userInput[2];
         final int age = Integer.parseInt(this.userInput[3]);
 
-        final User user = new User(name, email, age);
-
-        userManager.create(user);
+        userService.create(name, email, age);
     }
 
     private void read() {
@@ -70,7 +86,7 @@ public class ConsoleInterface {
 
         final Long id = Long.parseLong(this.userInput[1]);
 
-        Optional<User> optional = userManager.read(id);
+        Optional<User> optional = userService.read(id);
 
         if(optional.isPresent()) {
             final User user = optional.get();
@@ -86,17 +102,16 @@ public class ConsoleInterface {
     }
 
     private void update() {
-        if(this.userInput.length != 4) {
+        if(this.userInput.length != 5) {
             return;
         }
 
-        final String name = this.userInput[1];
-        final String email = this.userInput[2];
-        final int age = Integer.parseInt(this.userInput[3]);
+        final Long id = Long.parseLong(this.userInput[1]);
+        final String name = this.userInput[2];
+        final String email = this.userInput[3];
+        final int age = Integer.parseInt(this.userInput[4]);
 
-        final User user = new User(name, email, age);
-
-        userManager.update(user);
+        userService.update(id, name, email, age);
     }
 
     private void delete() {
@@ -106,6 +121,6 @@ public class ConsoleInterface {
 
         final Long id = Long.parseLong(this.userInput[1]);
 
-        userManager.delete(id);
+        userService.delete(id);
     }
 }

@@ -6,14 +6,15 @@
 <hibernate-configuration>
     <session-factory>
         <property name="hibernate.connection.driver-class">org.postgresql.Driver</property>
-        <property name="hibernate.connection.url">jdbc:postgresql://localhost:5432/userservicedb</property>
-        <property name="hibernate.connection.username">postgres</property>
-        <property name="hibernate.connection.password">1488</property>
+        <property name="hibernate.connection.url">jdbc:postgresql://localhost:5432/testdb</property>
+        <property name="hibernate.connection.username">test</property>
+        <property name="hibernate.connection.password">test</property>
 
         <property name="hibernate.dialect">org.hibernate.dialect.PostgreSQLDialect</property>
+        <property name="hibernate.hbm2ddl.auto">create-drop</property>
 
-        <property name="show_sql">true</property>
-        <property name="format_sql">true</property>
+        <property name="show_sql">false</property>
+        <property name="format_sql">false</property>
 
         <mapping class="edu.aston.userservice.models.User"/>
     </session-factory>

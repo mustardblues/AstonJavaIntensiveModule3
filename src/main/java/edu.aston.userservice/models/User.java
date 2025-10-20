@@ -17,6 +17,7 @@ import java.time.LocalDateTime;
 @Table(name = "users")
 @NoArgsConstructor
 public class User {
+    @Getter
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -33,6 +34,7 @@ public class User {
     @Column(name = "age", nullable = false)
     private Integer age;
 
+    @Getter
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -44,4 +46,12 @@ public class User {
         this.createdAt = LocalDateTime.now();
     }
 
+    @Builder
+    public User(final Long id, final String name, final String email, final int age) {
+        this.id = id;
+        this.name = name;
+        this.email = email;
+        this.age = age;
+        this.createdAt = LocalDateTime.now();
+    }
 }

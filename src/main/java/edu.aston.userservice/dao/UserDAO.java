@@ -1,7 +1,9 @@
 package edu.aston.userservice.dao;
 
+import edu.aston.userservice.config.HibernateSessionManager;
 import edu.aston.userservice.models.User;
 
+import jakarta.transaction.Transactional;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.hibernate.Session;
@@ -11,32 +13,28 @@ import org.hibernate.cfg.Configuration;
 
 import java.util.Optional;
 
-public class UserManager {
-    private final SessionFactory sessionFactory;
+public class UserDAO {
+    private SessionFactory sessionFactory;
 
-    private static final Logger logger = LogManager.getLogger(UserManager.class);
+    private static final Logger logger = LogManager.getLogger(UserDAO.class);
 
-    public UserManager() {
-        try {
-            this.sessionFactory = new Configuration().configure().buildSessionFactory();
-
-            logger.info("Connection to the database was completed successfully");
-        }
-        catch (Exception exception) {
-            logger.error("Failed to connect to the database", exception);
-            throw new RuntimeException("Failed to connect to the database", exception);
-        }
+    public void initSessionFactory(final SessionFactory sessionFactory) {
+        this.sessionFactory = sessionFactory;
     }
 
-    public void create(final User user) {
+    public User create(final User user) {
+        Transaction transaction = null;
+
         try(Session session = sessionFactory.openSession()) {
-            Transaction transaction = session.beginTransaction();
+            transaction = session.beginTransaction();
 
             session.persist(user);
 
             transaction.commit();
 
             logger.info("User has been created {}", user);
+
+            return user;
         }
         catch(Exception exception) {
             logger.error("Failed to create a new user to the database {}", user, exception);
@@ -52,20 +50,19 @@ public class UserManager {
                 logger.info("The user has been read {}", user);
             }
             else {
-                logger.info("Couldn't find the user in the database");
+                logger.error("Failed tp find the user in the database");
+                throw new RuntimeException("Failed to find the user in the database");
             }
 
-            return Optional.ofNullable(user);
-        }
-        catch(Exception exception) {
-            logger.error("Failed tp find the user in the database", exception);
-            throw new RuntimeException("Failed to find the user in the database", exception);
+            return Optional.of(user);
         }
     }
 
     public void update(final User user) {
+        Transaction transaction = null;
+
         try(Session session = sessionFactory.openSession()) {
-            Transaction transaction = session.beginTransaction();
+            transaction = session.beginTransaction();
 
             session.merge(user);
 
@@ -79,9 +76,12 @@ public class UserManager {
         }
     }
 
+    @Transactional
     public void delete(final Long id) {
+        Transaction transaction = null;
+
         try(Session session = sessionFactory.openSession()) {
-            Transaction transaction = session.beginTransaction();
+            transaction = session.beginTransaction();
 
             final User user = session.find(User.class, id);
 
@@ -91,14 +91,11 @@ public class UserManager {
                 logger.info("The user has been removed {}", user);
             }
             else {
-                logger.info("Couldn't update user information in the database");
+                logger.error("Failed to delete user from the database");
+                throw new RuntimeException("Failed to delete user from the database");
             }
 
             transaction.commit();
-        }
-        catch(Exception exception) {
-            logger.error("Failed to delete user from the database", exception);
-            throw new RuntimeException("Failed to delete user from the database", exception);
         }
     }
 }
